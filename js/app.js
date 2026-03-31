@@ -1614,6 +1614,8 @@ const App = (function() {
         QuickLinksModule.init(linksContainer);
       }
 
+      WakeLockModule.init();
+
     } catch (error) {
       console.error('Failed to initialize app:', error);
       showGlobalError('Failed to initialize app. Please refresh the page.');
@@ -1627,3 +1629,60 @@ const App = (function() {
 
 // Initialize app when DOM is ready
 document.addEventListener('DOMContentLoaded', App.init);
+
+/**
+ * Wake Lock Module
+ * Prevents screen from sleeping using Wake Lock API
+ */
+const WakeLockModule = (function() {
+  let wakeLock = null;
+  let isActive = false;
+
+  async function enable() {
+    try {
+      if ('wakeLock' in navigator) {
+        wakeLock = await navigator.wakeLock.request('screen');
+        isActive = true;
+        updateButton();
+        wakeLock.addEventListener('release', () => {
+          isActive = false;
+          updateButton();
+        });
+      }
+    } catch (e) {
+      console.warn('Wake Lock not available:', e);
+    }
+  }
+
+  function disable() {
+    if (wakeLock) {
+      wakeLock.release();
+      wakeLock = null;
+    }
+    isActive = false;
+    updateButton();
+  }
+
+  function updateButton() {
+    const btn = document.getElementById('wake-toggle');
+    const icon = document.querySelector('.wake-icon');
+    if (!btn || !icon) return;
+    icon.textContent = isActive ? '👁️' : '💤';
+    btn.title = isActive ? 'Screen awake (click to disable)' : 'Keep screen awake';
+    btn.classList.toggle('wake-active', isActive);
+  }
+
+  function init() {
+    const btn = document.getElementById('wake-toggle');
+    if (!btn) return;
+    if (!('wakeLock' in navigator)) {
+      btn.style.display = 'none';
+      return;
+    }
+    btn.addEventListener('click', () => {
+      isActive ? disable() : enable();
+    });
+  }
+
+  return { init };
+})();

@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -9,7 +9,11 @@
 <body>
     <!-- Theme Toggle Button -->
     <button id="theme-toggle" class="theme-toggle" aria-label="Toggle dark mode">
-        <span class="theme-icon">🌙</span>
+        <span class="theme-icon"></span>
+    </button>
+    <!-- Keep Awake Toggle -->
+    <button id="wake-toggle" class="wake-toggle" aria-label="Toggle keep awake" title="Keep screen awake">
+        <span class="wake-icon"></span>
     </button>
 
     <main class="dashboard">
@@ -20,7 +24,7 @@
             <div class="greeting-message">
                 <div class="greeting-wrapper">
                     <span id="greeting-text"></span>
-                    <button id="edit-name-btn" class="edit-name-btn" aria-label="Edit name">✏️</button>
+                    <button id="edit-name-btn" class="edit-name-btn" aria-label="Edit name"></button>
                 </div>
             </div>
         </section>
@@ -68,14 +72,7 @@
                 <span id="task-counter" class="task-counter"></span>
             </div>
             <form id="task-form" class="task-form">
-                <input 
-                    type="text" 
-                    id="task-input" 
-                    class="task-input" 
-                    placeholder="Add a new task..." 
-                    maxlength="500"
-                    required
-                >
+                <input type="text" id="task-input" class="task-input" placeholder="Add a new task..." maxlength="500" required>
                 <button type="submit" class="btn btn-add">Add Task</button>
                 <div class="char-counter" id="task-char-counter">0 / 500</div>
                 <div class="validation-message" id="task-validation-message"></div>
@@ -92,22 +89,9 @@
         <section id="links-container" class="links-section">
             <h2>Quick Links</h2>
             <form id="link-form" class="link-form">
-                <input 
-                    type="text" 
-                    id="link-name-input" 
-                    class="link-name-input" 
-                    placeholder="Link name" 
-                    maxlength="50"
-                    required
-                >
+                <input type="text" id="link-name-input" class="link-name-input" placeholder="Link name" maxlength="50" required>
                 <div class="char-counter" id="link-name-char-counter">0 / 50</div>
-                <input 
-                    type="text" 
-                    id="link-url-input" 
-                    class="link-url-input" 
-                    placeholder="URL" 
-                    required
-                >
+                <input type="text" id="link-url-input" class="link-url-input" placeholder="URL" required>
                 <button type="submit" class="btn btn-add">Add Link</button>
                 <div class="validation-message" id="link-validation-message"></div>
             </form>
@@ -119,13 +103,7 @@
     <div id="name-modal" class="modal">
         <div class="modal-content">
             <h3>What should I call you?</h3>
-            <input 
-                type="text" 
-                id="name-input" 
-                class="name-input" 
-                placeholder="Enter your name" 
-                maxlength="30"
-            >
+            <input type="text" id="name-input" class="name-input" placeholder="Enter your name" maxlength="30">
             <div class="modal-buttons">
                 <button id="save-name-btn" class="btn btn-primary">Save</button>
                 <button id="cancel-name-btn" class="btn btn-secondary">Cancel</button>

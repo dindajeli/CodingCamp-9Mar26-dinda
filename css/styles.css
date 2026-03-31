@@ -1433,3 +1433,46 @@ kbd {
     vertical-align: middle;
     flex-shrink: 0;
 }
+
+/* ===================================
+   Wake Lock Toggle Button
+   =================================== */
+
+.wake-toggle {
+    position: fixed;
+    top: var(--spacing-lg);
+    right: calc(var(--spacing-lg) + 60px);
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background-color: var(--color-surface);
+    border: 2px solid var(--color-border);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    transition: all var(--transition-fast);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25), 0 2px 8px rgba(0, 0, 0, 0.15);
+    z-index: 100;
+}
+
+.wake-toggle:hover {
+    transform: scale(1.1);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+
+.wake-toggle.wake-active {
+    background-color: var(--color-secondary);
+    border-color: var(--color-secondary);
+}
+
+@media (max-width: 768px) {
+    .wake-toggle {
+        top: var(--spacing-sm);
+        right: calc(var(--spacing-sm) + 55px);
+        width: 45px;
+        height: 45px;
+        font-size: 18px;
+    }
+}
