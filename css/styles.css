@@ -543,6 +543,7 @@ form {
     gap: var(--spacing-lg);
 }
 
+/* timer-display styles */
 .timer-display {
     font-size: 52px;
     font-weight: var(--font-weight-bold);
@@ -561,7 +562,6 @@ form {
 body.dark-mode .timer-display {
     background: rgba(15, 23, 42, 0.5);
 }
-
 .timer-controls {
     display: flex;
     gap: var(--spacing-sm);
@@ -620,6 +620,62 @@ body.dark-mode .timer-display {
 .btn-reset:active {
     transform: translateY(0);
     box-shadow: 0 1px 2px var(--color-shadow);
+}
+
+.timer-set-duration {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    margin-top: calc(var(--spacing-sm) * -0.5);
+}
+
+.timer-duration-fields {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+}
+
+.timer-duration-field {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+}
+
+.timer-duration-input {
+    width: 48px;
+    text-align: center;
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-medium);
+    padding: var(--spacing-xs) 4px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background-color: var(--color-surface);
+    color: var(--color-text);
+    outline: none;
+    transition: border-color var(--transition-fast);
+}
+
+.timer-duration-input:focus {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+/* hide number input arrows */
+.timer-duration-input::-webkit-inner-spin-button,
+.timer-duration-input::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+}
+.timer-duration-input[type=number] { -moz-appearance: textfield; }
+
+.timer-duration-label {
+    font-size: var(--font-size-small);
+    color: var(--color-text-light);
+}
+
+.btn-set {
+    background-color: var(--color-primary);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    font-size: var(--font-size-small);
 }
 
 @media (max-width: 768px) {
@@ -1239,4 +1295,141 @@ body.dark-mode .timer-display {
     .modal-buttons .btn {
         width: 100%;
     }
+}
+
+/* ===================================
+   Timer Progress Bar
+   =================================== */
+
+.timer-progress-bar {
+    width: 100%;
+    height: 6px;
+    background-color: var(--color-border);
+    border-radius: 99px;
+    overflow: hidden;
+}
+
+.timer-progress-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, var(--color-primary), var(--color-secondary));
+    border-radius: 99px;
+    transition: width 1s linear;
+}
+
+/* ===================================
+   Timer Presets
+   =================================== */
+
+.timer-presets {
+    display: flex;
+    gap: var(--spacing-xs);
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.btn-preset {
+    padding: 4px var(--spacing-sm);
+    font-size: var(--font-size-small);
+    background-color: var(--color-border);
+    color: var(--color-text);
+    border-radius: var(--radius-sm);
+    transition: all var(--transition-fast);
+}
+
+.btn-preset:hover {
+    background-color: var(--color-primary);
+    color: white;
+    transform: translateY(-1px);
+}
+
+.btn-preset.active-preset {
+    background-color: var(--color-primary);
+    color: white;
+}
+
+/* ===================================
+   Timer Hint
+   =================================== */
+
+.timer-hint {
+    font-size: var(--font-size-small);
+    color: var(--color-text-light);
+    margin-bottom: 0;
+}
+
+kbd {
+    display: inline-block;
+    padding: 1px 6px;
+    font-size: 11px;
+    border: 1px solid var(--color-border);
+    border-radius: 4px;
+    background-color: var(--color-background);
+    color: var(--color-text);
+    font-family: var(--font-family);
+}
+
+/* ===================================
+   Task Counter & Filter
+   =================================== */
+
+.tasks-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--spacing-md);
+}
+
+.tasks-header h2 {
+    margin-bottom: 0;
+}
+
+.task-counter {
+    font-size: var(--font-size-small);
+    color: var(--color-text-light);
+    font-weight: var(--font-weight-medium);
+    background-color: var(--color-background);
+    padding: 2px var(--spacing-xs);
+    border-radius: var(--radius-sm);
+}
+
+.task-filters {
+    display: flex;
+    gap: var(--spacing-xs);
+    margin-top: var(--spacing-sm);
+}
+
+.btn-filter {
+    padding: 4px var(--spacing-sm);
+    font-size: var(--font-size-small);
+    background: none;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    color: var(--color-text-light);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    font-family: var(--font-family);
+}
+
+.btn-filter:hover {
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+}
+
+.btn-filter.active-filter {
+    background-color: var(--color-primary);
+    border-color: var(--color-primary);
+    color: white;
+}
+
+/* ===================================
+   Quick Links Favicon
+   =================================== */
+
+.link-favicon {
+    width: 16px;
+    height: 16px;
+    margin-right: 6px;
+    vertical-align: middle;
+    flex-shrink: 0;
 }

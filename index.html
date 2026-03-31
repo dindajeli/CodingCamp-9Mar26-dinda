@@ -29,16 +29,44 @@
         <section id="timer-container" class="timer-section">
             <h2>Focus Timer</h2>
             <div class="timer-display">25:00</div>
+            <div class="timer-progress-bar"><div class="timer-progress-fill" id="timer-progress-fill"></div></div>
+            <div class="timer-presets">
+                <button class="btn btn-preset" data-minutes="5">5m</button>
+                <button class="btn btn-preset" data-minutes="15">15m</button>
+                <button class="btn btn-preset active-preset" data-minutes="25">25m</button>
+                <button class="btn btn-preset" data-minutes="60">1h</button>
+            </div>
             <div class="timer-controls">
                 <button id="timer-start" class="btn btn-start">Start</button>
                 <button id="timer-stop" class="btn btn-stop">Stop</button>
                 <button id="timer-reset" class="btn btn-reset">Reset</button>
             </div>
+            <div class="timer-set-duration">
+                <div class="timer-duration-fields">
+                    <div class="timer-duration-field">
+                        <input type="number" id="timer-hours-input" class="timer-duration-input" value="0" min="0" max="23" placeholder="0">
+                        <span class="timer-duration-label">h</span>
+                    </div>
+                    <div class="timer-duration-field">
+                        <input type="number" id="timer-minutes-input" class="timer-duration-input" value="25" min="0" max="59" placeholder="25">
+                        <span class="timer-duration-label">m</span>
+                    </div>
+                    <div class="timer-duration-field">
+                        <input type="number" id="timer-seconds-input" class="timer-duration-input" value="0" min="0" max="59" placeholder="0">
+                        <span class="timer-duration-label">s</span>
+                    </div>
+                </div>
+                <button id="timer-set-btn" class="btn btn-set">Set</button>
+            </div>
+            <p class="timer-hint">Press <kbd>Space</kbd> to start/stop</p>
         </section>
 
         <!-- Tasks Section -->
         <section id="tasks-container" class="tasks-section">
-            <h2>To-Do List</h2>
+            <div class="tasks-header">
+                <h2>To-Do List</h2>
+                <span id="task-counter" class="task-counter"></span>
+            </div>
             <form id="task-form" class="task-form">
                 <input 
                     type="text" 
@@ -53,6 +81,11 @@
                 <div class="validation-message" id="task-validation-message"></div>
             </form>
             <div id="task-list" class="task-list"></div>
+            <div class="task-filters">
+                <button class="btn-filter active-filter" data-filter="all">All</button>
+                <button class="btn-filter" data-filter="active">Active</button>
+                <button class="btn-filter" data-filter="done">Done</button>
+            </div>
         </section>
 
         <!-- Quick Links Section -->

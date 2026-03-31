@@ -402,23 +402,26 @@ const TimerModule = (function() {
   let containerElement = null;
 
   /**
-   * Format seconds as MM:SS with zero-padding
+   * Format seconds as HH:MM:SS or MM:SS depending on duration
    * @param {number} seconds - Number of seconds to format
-   * @returns {string} - Formatted time string (MM:SS)
+   * @returns {string} - Formatted time string
    */
   function formatTime(seconds) {
-    const minutes = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    
-    // Zero-pad both minutes and seconds
-    const minutesStr = String(minutes).padStart(2, '0');
-    const secsStr = String(secs).padStart(2, '0');
-    
-    return `${minutesStr}:${secsStr}`;
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const s = seconds % 60;
+
+    const mm = String(m).padStart(2, '0');
+    const ss = String(s).padStart(2, '0');
+
+    if (h > 0) {
+      return `${String(h).padStart(2, '0')}:${mm}:${ss}`;
+    }
+    return `${mm}:${ss}`;
   }
 
   /**
-   * Update the timer display
+   * Update the timer display and progress bar
    */
   function updateDisplay() {
     if (!containerElement) return;
@@ -426,6 +429,70 @@ const TimerModule = (function() {
     const timerDisplay = containerElement.querySelector('.timer-display');
     if (timerDisplay) {
       timerDisplay.textContent = formatTime(state.remainingSeconds);
+    }
+
+    // Update progress bar
+    const fill = document.getElementById('timer-progress-fill');
+    if (fill && state.totalSeconds > 0) {
+      const pct = ((state.totalSeconds - state.remainingSeconds) / state.totalSeconds) * 100;
+      fill.style.width = `${pct}%`;
+    }
+  }
+
+  /**
+   * Play a ding sound using Web Audio API
+   */
+  function playDing() {
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      
+      // First ding
+      const osc1 = ctx.createOscillator();
+      const gain1 = ctx.createGain();
+      osc1.connect(gain1);
+      gain1.connect(ctx.destination);
+      osc1.frequency.value = 880;
+      osc1.type = 'sine';
+      gain1.gain.setValueAtTime(0.5, ctx.currentTime);
+      gain1.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 1);
+      osc1.start(ctx.currentTime);
+      osc1.stop(ctx.currentTime + 1);
+
+      // Second ding (slightly delayed)
+      const osc2 = ctx.createOscillator();
+      const gain2 = ctx.createGain();
+      osc2.connect(gain2);
+      gain2.connect(ctx.destination);
+      osc2.frequency.value = 660;
+      osc2.type = 'sine';
+      gain2.gain.setValueAtTime(0.4, ctx.currentTime + 0.3);
+      gain2.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 1.3);
+      osc2.start(ctx.currentTime + 0.3);
+      osc2.stop(ctx.currentTime + 1.3);
+    } catch (e) {
+      console.warn('Audio not supported:', e);
+    }
+  }
+
+  /**
+   * Show browser notification when timer ends
+   */
+  function showNotification() {
+    if (!('Notification' in window)) return;
+
+    if (Notification.permission === 'granted') {
+      new Notification('Focus Timer Done! 🎉', {
+        body: 'Great work! Time for a break.',
+        icon: 'https://cdn.jsdelivr.net/npm/twemoji@14/assets/72x72/1f3af.png'
+      });
+    } else if (Notification.permission !== 'denied') {
+      Notification.requestPermission().then(permission => {
+        if (permission === 'granted') {
+          new Notification('Focus Timer Done! 🎉', {
+            body: 'Great work! Time for a break.',
+          });
+        }
+      });
     }
   }
 
@@ -440,6 +507,8 @@ const TimerModule = (function() {
       // Stop automatically when reaching zero
       if (state.remainingSeconds === 0) {
         stop();
+        playDing();
+        showNotification();
       }
     }
   }
@@ -478,30 +547,114 @@ const TimerModule = (function() {
   }
 
   /**
+   * Parse HH:MM:SS or MM:SS or SS input to total seconds
+   * @param {string} input
+   * @returns {number} total seconds, or 0 if invalid
+   */
+  function parseDuration(input) {
+    const parts = input.trim().split(':').map(p => parseInt(p, 10));
+    if (parts.some(isNaN)) return 0;
+    if (parts.length === 3) return parts[0] * 3600 + parts[1] * 60 + parts[2];
+    if (parts.length === 2) return parts[0] * 60 + parts[1];
+    if (parts.length === 1) return parts[0] * 60; // treat single number as minutes
+    return 0;
+  }
+
+  /**
+   * Set custom timer duration
+   * @param {string} input - Duration string in HH:MM:SS, MM:SS, or minutes
+   */
+  function setDuration(input) {
+    const seconds = parseDuration(input);
+    if (seconds <= 0) return;
+    stop();
+    state.totalSeconds = seconds;
+    state.remainingSeconds = seconds;
+    updateDisplay();
+  }
+
+  /**
    * Initialize the timer module
    * @param {HTMLElement} container - Container element for the timer
    */
   function init(container) {
     containerElement = container;
 
-    // Set up event listeners for control buttons
     const startButton = document.getElementById('timer-start');
     const stopButton = document.getElementById('timer-stop');
     const resetButton = document.getElementById('timer-reset');
+    const setButton = document.getElementById('timer-set-btn');
+    const durationInput = document.getElementById('timer-duration-input');
 
-    if (startButton) {
-      startButton.addEventListener('click', start);
+    if (startButton) startButton.addEventListener('click', start);
+    if (stopButton) stopButton.addEventListener('click', stop);
+    if (resetButton) resetButton.addEventListener('click', reset);
+
+    if (setButton) {
+      setButton.addEventListener('click', function() {
+        const h = parseInt(document.getElementById('timer-hours-input').value) || 0;
+        const m = parseInt(document.getElementById('timer-minutes-input').value) || 0;
+        const s = parseInt(document.getElementById('timer-seconds-input').value) || 0;
+        const totalSecs = h * 3600 + m * 60 + s;
+        if (totalSecs > 0) {
+          stop();
+          state.totalSeconds = totalSecs;
+          state.remainingSeconds = totalSecs;
+          updateDisplay();
+        }
+      });
     }
 
-    if (stopButton) {
-      stopButton.addEventListener('click', stop);
+    // Enter on hours → focus minutes, Enter on minutes → focus seconds, Enter on seconds → set
+    const hoursInput = document.getElementById('timer-hours-input');
+    const minutesInput = document.getElementById('timer-minutes-input');
+    const secondsInput = document.getElementById('timer-seconds-input');
+
+    if (hoursInput) {
+      hoursInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') { e.preventDefault(); minutesInput && minutesInput.focus(); }
+      });
+    }
+    if (minutesInput) {
+      minutesInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') { e.preventDefault(); secondsInput && secondsInput.focus(); }
+      });
+    }
+    if (secondsInput) {
+      secondsInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') { e.preventDefault(); document.getElementById('timer-set-btn').click(); }
+      });
     }
 
-    if (resetButton) {
-      resetButton.addEventListener('click', reset);
-    }
+    // Preset buttons
+    containerElement.querySelectorAll('.btn-preset').forEach(btn => {
+      btn.addEventListener('click', function() {
+        const mins = parseInt(this.dataset.minutes);
+        stop();
+        state.totalSeconds = mins * 60;
+        state.remainingSeconds = mins * 60;
+        updateDisplay();
+        containerElement.querySelectorAll('.btn-preset').forEach(b => b.classList.remove('active-preset'));
+        this.classList.add('active-preset');
+        document.getElementById('timer-hours-input').value = mins >= 60 ? Math.floor(mins / 60) : 0;
+        document.getElementById('timer-minutes-input').value = mins >= 60 ? mins % 60 : mins;
+        document.getElementById('timer-seconds-input').value = 0;
+      });
+    });
 
-    // Initial display update
+    // Space bar shortcut to start/stop (only when not typing in an input)
+    document.addEventListener('keydown', function(e) {
+      if (e.code === 'Space' && !['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) {
+        e.preventDefault();
+        state.isRunning ? stop() : start();
+      }
+    });
+
+    if (durationInput) {
+      durationInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') setDuration(durationInput.value);
+      });
+    }
     updateDisplay();
   }
 
@@ -532,7 +685,8 @@ const TasksModule = (function() {
 
   // Internal state
   const state = {
-    tasks: [] // Array of task objects
+    tasks: [],
+    filter: 'all' // 'all', 'active', 'done'
   };
 
   let containerElement = null;
@@ -754,6 +908,17 @@ const TasksModule = (function() {
   }
 
   /**
+   * Update task counter display
+   */
+  function updateCounter() {
+    const counter = document.getElementById('task-counter');
+    if (!counter) return;
+    const done = state.tasks.filter(t => t.completed).length;
+    const total = state.tasks.length;
+    counter.textContent = total > 0 ? `${done}/${total} done` : '';
+  }
+
+  /**
    * Render the task list
    */
   function render() {
@@ -762,20 +927,25 @@ const TasksModule = (function() {
     const taskList = containerElement.querySelector('#task-list');
     if (!taskList) return;
 
-    // Check if there are no tasks - show empty state
-    if (state.tasks.length === 0) {
-      taskList.innerHTML = '<p class="empty-state">No tasks yet. Add one to get started!</p>';
-      return;
+    const filtered = state.tasks.filter(t => {
+      if (state.filter === 'active') return !t.completed;
+      if (state.filter === 'done') return t.completed;
+      return true;
+    });
+
+    if (filtered.length === 0) {
+      taskList.innerHTML = '';
+    } else {
+      taskList.innerHTML = filtered.map(task => `
+        <div class="task-item ${task.completed ? 'completed' : ''}" data-id="${task.id}">
+          <input type="checkbox" class="task-checkbox" ${task.completed ? 'checked' : ''}>
+          <span class="task-text">${escapeHtml(task.text)}</span>
+          <button class="btn-delete">Delete</button>
+        </div>
+      `).join('');
     }
 
-    // Render tasks
-    taskList.innerHTML = state.tasks.map(task => `
-      <div class="task-item ${task.completed ? 'completed' : ''}" data-id="${task.id}">
-        <input type="checkbox" class="task-checkbox" ${task.completed ? 'checked' : ''}>
-        <span class="task-text">${escapeHtml(task.text)}</span>
-        <button class="btn-delete">Delete</button>
-      </div>
-    `).join('');
+    updateCounter();
   }
 
   /**
@@ -931,6 +1101,16 @@ const TasksModule = (function() {
         handleDeleteClick(event);
       });
     }
+
+    // Filter buttons
+    containerElement.querySelectorAll('.btn-filter').forEach(btn => {
+      btn.addEventListener('click', function() {
+        state.filter = this.dataset.filter;
+        containerElement.querySelectorAll('.btn-filter').forEach(b => b.classList.remove('active-filter'));
+        this.classList.add('active-filter');
+        render();
+      });
+    });
 
     // Initial render
     render();
@@ -1175,21 +1355,26 @@ const QuickLinksModule = (function() {
     const linkList = containerElement.querySelector('#link-list');
     if (!linkList) return;
 
-    // Check if there are no links - show empty state
+    // Check if there are no links - render empty
     if (state.links.length === 0) {
-      linkList.innerHTML = '<p class="empty-state">No links yet. Add one to get started!</p>';
+      linkList.innerHTML = '';
       return;
     }
 
     // Render links as clickable buttons with delete button
-    linkList.innerHTML = state.links.map(link => `
-      <div class="link-item" data-id="${link.id}">
-        <button class="link-button" data-url="${escapeHtml(link.url)}">
-          ${escapeHtml(link.name)}
-        </button>
-        <button class="btn-delete-link" aria-label="Delete ${escapeHtml(link.name)}"></button>
-      </div>
-    `).join('');
+    linkList.innerHTML = state.links.map(link => {
+      const domain = new URL(link.url).hostname;
+      const favicon = `https://www.google.com/s2/favicons?domain=${domain}&sz=16`;
+      return `
+        <div class="link-item" data-id="${link.id}">
+          <button class="link-button" data-url="${escapeHtml(link.url)}">
+            <img src="${favicon}" class="link-favicon" alt="" onerror="this.style.display='none'">
+            ${escapeHtml(link.name)}
+          </button>
+          <button class="btn-delete-link" aria-label="Delete ${escapeHtml(link.name)}"></button>
+        </div>
+      `;
+    }).join('');
   }
 
   /**
@@ -1355,14 +1540,57 @@ const App = (function() {
     }, 5000);
   }
 
+  /**
+   * Send a productivity reminder notification
+   */
+  function sendProductivityReminder() {
+    if (!('Notification' in window) || Notification.permission !== 'granted') return;
+
+    const tasks = TasksModule.getTasks();
+    const pending = tasks.filter(t => !t.completed);
+
+    if (pending.length === 0) {
+      new Notification('All done! 🎉', {
+        body: 'You completed all your tasks. Add new ones to stay productive!',
+      });
+    } else {
+      new Notification('Stay productive! 💪', {
+        body: `You have ${pending.length} task${pending.length > 1 ? 's' : ''} left. Keep going!`,
+      });
+    }
+  }
+
+  /**
+   * Start productivity reminder schedule
+   */
+  function startProductivityReminders() {
+    if (!('Notification' in window)) return;
+
+    const fire = () => {
+      if (Notification.permission === 'granted') sendProductivityReminder();
+    };
+
+    // Fire once on load after a short delay
+    setTimeout(fire, 3000);
+
+    // Then every 30 minutes
+    setInterval(fire, 30 * 60 * 1000);
+  }
+
   function init() {
     try {
       // Set up global error handler for Storage Manager
       StorageManager.setErrorCallback(showGlobalError);
 
+      // Request notification permission early
+      if ('Notification' in window && Notification.permission === 'default') {
+        Notification.requestPermission().then(() => startProductivityReminders());
+      } else {
+        startProductivityReminders();
+      }
+
       // Initialize theme manager first
       ThemeManager.init();
-
       // Get container elements
       const greetingContainer = document.getElementById('greeting-container');
       const timerContainer = document.getElementById('timer-container');
